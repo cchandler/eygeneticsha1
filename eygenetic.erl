@@ -43,6 +43,8 @@ handle_call({min, Distance, List}, {FromPid,_}=From, State) ->
     
 handle_call({pid, Pid}, From, State) ->
     io:format("Registered a PID ~p, ~n", [Pid]),
+    Pid ! {again},
+    io:format("Started Pid! ~p ~n", [Pid]),
     {reply, pid, State};
 
 handle_call({set, Key, Value}, From, State) ->
@@ -75,7 +77,10 @@ attempt_init_cluster(N) ->
     lists:foldl(fun(Elem,Acc) -> 
         Pid = spawn(Elem, fun() -> eygenetic:attempt_init(N) end ),
         Acc ++ [Pid]
-        end, [], nodes()).
+        end, [], nodes()),
+    
+    %Don't forget the local node :-)
+    eygenetic:attempt_init(N).
 
 attempt_init(N) ->
     lists:foldl(fun(Elem, Acc) -> 
