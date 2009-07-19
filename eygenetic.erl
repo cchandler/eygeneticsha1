@@ -40,6 +40,10 @@ handle_call({min, Distance, List}, {FromPid,_}=From, State) ->
     io:format("Minimized: ~p ~p ~n", [Distance, List]),
     FromPid ! {again},
     {reply, min, State};
+    
+handle_call({pid, Pid}, From, State) ->
+    io:format("Registered a PID ~p, ~n", [Pid]),
+    {reply, pid, State};
 
 handle_call({set, Key, Value}, From, State) ->
    % Rec = do_set(Key, Value),
@@ -77,6 +81,7 @@ attempt_init(N) ->
     lists:foldl(fun(Elem, Acc) -> 
 %        Pid = spawn(eygenetic, attempt_loop, [N]),
         Pid = spawn(fun() -> attempt_loop(N) end),
+        gen_server:call({global,eygenetic}, {pid, Pid}),
         Acc ++ [Pid]
         end, [], lists:seq(1,8)).
 
