@@ -7,6 +7,7 @@
 -export([init/1, handle_call/3, handle_cast/2,handle_info/2]).
 
 -export([read_dic/0, shuffle/2, permute/1, join/1, attempt/3, attempt/1, swap/1, factorial/1]).
+-export([attempt_init/1, attempt_init_cluster/1, attempt_loop/1]).
 
 %%% gen_server callbacks
 init(_Arg) ->
@@ -35,8 +36,9 @@ handle_call({all,N}, From, State) ->
         end, {}, nodes()),
     {reply, ok, State};
    
-handle_call({min, Distance, List}, From, State) -> 
+handle_call({min, Distance, List}, {FromPid,_}=From, State) -> 
     io:format("Minimized: ~p ~p ~n", [Distance, List]),
+    FromPid ! {again},
     {reply, min, State};
 
 handle_call({set, Key, Value}, From, State) ->
@@ -64,6 +66,28 @@ read_dic() ->
 attempt(N) -> {It,Distance,Vector} = eygenetic:attempt(eygenetic:read_dic(),"A7D10B0CA7D0DF3C6FD57645053D549EB7C0E0A3", N),
     gen_server:call({global,eygenetic}, {min, Distance, Vector}),
     {It,Distance,Vector}.
+
+attempt_init_cluster(N) ->
+    lists:foldl(fun(Elem,Acc) -> 
+        Pid = spawn(Elem, fun() -> eygenetic:attempt_init(N) end ),
+        Acc ++ [Pid]
+        end, [], nodes()).
+
+attempt_init(N) ->
+    lists:foldl(fun(Elem, Acc) -> 
+%        Pid = spawn(eygenetic, attempt_loop, [N]),
+        Pid = spawn(fun() -> attempt_loop(N) end),
+        Acc ++ [Pid]
+        end, [], lists:seq(1,8)).
+
+attempt_loop(N) ->
+    receive
+        {again} ->
+            attempt(N),
+            attempt_loop(N);
+        {stop} ->
+            attempt_loop(N)
+    end.
 
 % attempt(N, Pid) -> {It,Distance,Vector} = eygenetic:attempt(eygenetic:read_dic(),"A7D10B0CA7D0DF3C6FD57645053D549EB7C0E0A3", N),
 %     Pid ! {min, Distance, Vector},
