@@ -63,13 +63,13 @@ factorial(0) -> 1;
 factorial(N) when N > 0 -> N * factorial(N-1).
     
 read_dic() ->
-  {ok, Content} = file:read_file("dictionary"),
+  {ok, Content} = file:read_file("dictionary1"),
   WordList = binary_to_list(Content),
   Tokens = string:tokens(WordList,"\n"),
   {List1,_List2} = lists:split(12,shuffle(Tokens, [])),
   List1.
   
-attempt(N) -> {It,Distance,Vector} = eygenetic:attempt(eygenetic:read_dic(),"A7D10B0CA7D0DF3C6FD57645053D549EB7C0E0A3", N),
+attempt(N) -> {It,Distance,Vector} = eygenetic:attempt(eygenetic:read_dic(),"1249C4B7F578204F10798C0269F8488280FB9981", N),
     gen_server:call({global,eygenetic}, {min, Distance, Vector}),
     {It,Distance,Vector}.
 
@@ -121,7 +121,7 @@ attempt(List, Target, N) ->
 iteration(List) ->
     % io:format("~p ~n", [List]),
     % case random:uniform(3) of
-    case crypto:rand_uniform(1,4) of
+    case crypto:rand_uniform(1,3) of
         1 ->
             %io:format("Shuffle ~n", []),
             shuffle(List,[]);
